@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!-- 預設強制啟用深色模式，可移除 class="dark" 來測試淺色模式 -->
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>現在時間</title>
+    <!-- 引入 Tailwind CSS 以進行快速樣式設計 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            /* 初始隱藏，用於淡入效果 */
+            opacity: 0;
+            transition: opacity .5s ease-in;
+            overflow: hidden;
+            /* 淺色模式下的背景 */
+            background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
+        }
+
+        /* 深色模式下的背景 */
+        .dark body {
+             background-image: linear-gradient(to top, #1e3a8a 0%, #1e1b4b 100%);
+        }
+
+        .colon {
+            position: relative;
+            top: -.05em; /* 微調冒號位置使其對齊 */
+            animation: p 1.5s infinite;
+        }
+
+        /* 冒號閃爍動畫 */
+        @keyframes p {
+            50% {
+                opacity: .3;
+            }
+        }
+        
+        #t {
+            /* 淺色模式下的清晰陰影效果 */
+            text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        .dark #t {
+            /* 深色模式下的浮雕效果 */
+            text-shadow: -1px -1px 1px rgba(255, 255, 255, 0.15), 1px 1px 1px rgba(0, 0, 0, 0.5);
+        }
+
+        /**
+         * 為毛玻璃框架增加更強的立體感
+         */
+        #main-container {
+            /* 使用多層次 box-shadow 模擬光照和陰影 */
+            box-shadow: 
+                /* 外部陰影，使其更深、更擴散 */
+                0px 10px 30px rgba(0, 0, 0, 0.1),
+                /* 內部頂部高光，模擬玻璃邊緣的反光 */
+                inset 0px 1px 1px rgba(255, 255, 255, 0.7);
+        }
+
+        .dark #main-container {
+            box-shadow: 
+                /* 外部陰影 */
+                0px 10px 30px rgba(0, 0, 0, 0.3),
+                /* 內部頂部高光 */
+                inset 0px 1px 1px rgba(255, 255, 255, 0.1),
+                /* 底部邊框線，增加輪廓感 */
+                inset 0px -1px 0px rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="text-gray-800 dark:text-white flex items-center justify-center min-h-screen p-2">
+
+    <!-- 移除原有的 border 和 shadow class，改由 style 標籤統一控制 -->
+    <div id="main-container" class="flex items-baseline flex-wrap gap-x-4 gap-y-2 justify-center p-4 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-xl transition-transform duration-300 ease-in-out">
+        <!-- 大幅加深淺色模式下的文字顏色以提高對比度 -->
+        <div id="t" class="text-3xl font-bold text-gray-900 dark:text-sky-300">00:00:00</div>
+        <div id="d" class="text-lg text-gray-700 dark:text-gray-200"></div>
+        <!-- 【清晰度優化】再次提升地理位置與IP文字的對比度和字體粗細 -->
+        <div id="l" class="text-sm font-medium text-gray-700 dark:text-gray-300">正在獲取位置...</div>
+    </div>
+
+    <script>
+        // 使用立即調用函式表達式 (IIFE) 來避免污染全域作用域
+        (function(d) {
+            // 用於儲存伺服器與客戶端時間差的變數
+            let timeOffset = 0;
+
+            /**
+             * 多語系支援
+             */
+            const translations = {
+                'en': {
+                    weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    loading: 'Getting location...',
+                    ip: 'IP',
+                    unknownLocation: 'Unknown Location',
+                    mapTitle: 'View on Google Maps',
+                    ipTitle: 'View IP Details'
+                },
+                'zh-TW': {
+                    weekdays: ['日', '一', '二', '三', '四', '五', '六'],
+                    loading: '正在獲取位置...',
+                    ip: 'IP 位址',
+                    unknownLocation: '未知地點',
+                    mapTitle: '在 Google Maps 上查看',
+                    ipTitle: '查詢 IP 詳細資訊'
+                },
+                'ja': {
+                    weekdays: ['日', '月', '火', '水', '木', '金', '土'],
+                    loading: '場所を取得中...',
+                    ip: 'IPアドレス',
+                    unknownLocation: '不明な場所',
+                    mapTitle: 'Googleマップで見る',
+                    ipTitle: 'IP詳細の確認'
+                }
+            };
+            
+            // 偵測瀏覽器語言，並選擇對應的翻譯
+            function getLang() {
+                const userLang = navigator.language || 'en';
+                const mainLang = userLang.split('-')[0];
+                if (translations[userLang]) return userLang;
+                if (translations[mainLang]) return mainLang;
+                return 'en'; // 預設語言
+            }
+
+            const currentLang = getLang();
+            const T = translations[currentLang];
+            
+            // 將初始文字設為對應的語言
+            d.getElementById('l').innerText = T.loading;
+
+            /**
+             * 根據螢幕解析度設定自適應縮放
+             */
+            function setResponsiveScale() {
+                const container = d.getElementById('main-container');
+                const screenWidth = window.screen.width;
+                let scaleFactor = 1.0; // 預設 100%
+
+                // 增加對 4K 和 8K 解析度的支援
+                if (screenWidth >= 7680) {      // 8K 或以上
+                    scaleFactor = 2.0;
+                } else if (screenWidth >= 3840) { // 4K 或以上
+                    scaleFactor = 1.5;
+                } else if (screenWidth >= 2560) {
+                    scaleFactor = 1.25; 
+                } else if (screenWidth >= 1920) {
+                    scaleFactor = 1.10; 
+                }
+                
+                container.style.transform = `scale(${scaleFactor})`;
+                console.log(`螢幕寬度: ${screenWidth}px, 縮放比例: ${scaleFactor}`);
+            }
+
+            // 用於地理位置 API 的 JSONP 回呼函式
+            window.L = function(json) {
+                if (json.status === 'success') {
+                    const locationEl = d.getElementById('l');
+                    const ip = json.query || '';
+                    const city = json.city || T.unknownLocation;
+                    const countryCode = json.countryCode || '';
+                    const locationText = `${city}, ${countryCode}`;
+                    
+                    const encodedLocation = encodeURIComponent(`${city}, ${json.country || ''}`);
+                    const locationLink = `<a href="https://www.google.com/maps/search/?api=1&query=${encodedLocation}" target="_blank" rel="noopener noreferrer" class="hover:underline" title="${T.mapTitle}">${locationText}</a>`;
+
+                    const ipLink = ip 
+                        ? `<a href="https://ipinfo.io/${ip}" target="_blank" rel="noopener noreferrer" class="hover:underline" title="${T.ipTitle}">${T.ip}: ${ip}</a>` 
+                        : `${T.ip}: 未知`;
+
+                    locationEl.innerHTML = `${locationLink} | ${ipLink}`;
+                }
+            };
+
+            // 【重大更新】根據系統語言，選擇 API 支援的語言參數
+            let apiLang;
+            if (currentLang === 'zh-TW') {
+                apiLang = 'zh-CN'; // ip-api.com 使用 zh-CN 顯示中文
+            } else if (['en', 'ja'].includes(currentLang)) {
+                apiLang = currentLang;
+            } else {
+                apiLang = 'en'; // 其他語言預設為英文
+            }
+
+            const locationScript = d.createElement('script');
+            locationScript.src = `http://ip-api.com/json/?lang=${apiLang}&callback=L`;
+            d.head.appendChild(locationScript);
+
+            // 用於時間 API 的 JSONP 回呼函式
+            window.T = function(json) {
+                // 收到回應後，計算一次時間差
+                timeOffset = new Date(json.currentUtcTime).getTime() - new Date().getTime();
+            };
+
+            // 創建 script 標籤以觸發時間同步的 JSONP 請求
+            const timeScript = d.createElement('script');
+            timeScript.src = `https://timeapi.io/api/TimeZone/ip?jsonp=T`;
+            d.head.appendChild(timeScript);
+            
+            // 頁面載入時立即設定縮放
+            setResponsiveScale();
+
+            // 每秒更新一次時鐘
+            setInterval(() => {
+                const now = new Date(new Date().getTime() + timeOffset);
+                const h = ('0' + now.getHours()).slice(-2);
+                const m = ('0' + now.getMinutes()).slice(-2);
+                const s = ('0' + now.getSeconds()).slice(-2);
+
+                const year = now.getFullYear();
+                const month = ('0' + (now.getMonth() + 1)).slice(-2);
+                const day = ('0' + now.getDate()).slice(-2);
+                const weekday = T.weekdays[now.getDay()];
+
+                // 更新 DOM 元素內容
+                d.getElementById('t').innerHTML = `${h}<span class="colon">:</span>${m}<span class="colon">:</span>${s}`;
+                d.getElementById('d').innerText = `${year}-${month}-${day} ${weekday}`;
+            }, 1000);
+
+            // 所有設定完成後，讓頁面淡入
+            d.body.style.opacity = 1;
+        })(document);
+    </script>
+</body>
+</html>

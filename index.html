@@ -164,18 +164,21 @@
                     const countryCode = json.countryCode || '';
                     const locationText = `${city}, ${countryCode}`;
                     
+                    // 將地理位置轉換為 Google Maps 連結
                     const encodedLocation = encodeURIComponent(`${city}, ${json.country || ''}`);
                     const locationLink = `<a href="https://www.google.com/maps/search/?api=1&query=${encodedLocation}" target="_blank" rel="noopener noreferrer" class="hover:underline" title="${T.mapTitle}">${locationText}</a>`;
 
+                    // 將 IP 位址轉換為可點擊的連結
                     const ipLink = ip 
                         ? `<a href="https://ipinfo.io/${ip}" target="_blank" rel="noopener noreferrer" class="hover:underline" title="${T.ipTitle}">${T.ip}: ${ip}</a>` 
                         : `${T.ip}: 未知`;
 
+                    // 使用 innerHTML 來插入包含連結的字串
                     locationEl.innerHTML = `${locationLink} | ${ipLink}`;
                 }
             };
 
-            // 【重大更新】根據系統語言，選擇 API 支援的語言參數
+            // 根據系統語言，選擇 API 支援的語言參數
             let apiLang;
             if (currentLang === 'zh-TW') {
                 apiLang = 'zh-CN'; // ip-api.com 使用 zh-CN 顯示中文
@@ -186,7 +189,8 @@
             }
 
             const locationScript = d.createElement('script');
-            locationScript.src = `http://ip-api.com/json/?lang=${apiLang}&callback=L`;
+            // 【重大更新】將 API 請求從 http 改為 https
+            locationScript.src = `https://ip-api.com/json/?lang=${apiLang}&callback=L`;
             d.head.appendChild(locationScript);
 
             // 用於時間 API 的 JSONP 回呼函式

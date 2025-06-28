@@ -37,9 +37,12 @@
             }
         }
         
+        /**
+         * 徹底翻新淺色模式的文字陰影以確保清晰度
+         */
         #t {
-            /* 淺色模式下的清晰陰影效果 */
-            text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.15);
+            /* 淺色模式下的清晰雕刻效果 */
+            text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.7);
         }
 
         .dark #t {
@@ -72,13 +75,13 @@
 </head>
 <body class="text-gray-800 dark:text-white flex items-center justify-center min-h-screen p-2">
 
-    <!-- 移除原有的 border 和 shadow class，改由 style 標籤統一控制 -->
-    <div id="main-container" class="flex items-baseline flex-wrap gap-x-4 gap-y-2 justify-center p-4 rounded-2xl bg-white/30 dark:bg-black/20 backdrop-blur-xl transition-transform duration-300 ease-in-out">
+    <!-- 調整淺色模式的背景顏色與透明度，並增加細微邊框 -->
+    <div id="main-container" class="flex items-baseline flex-wrap gap-x-4 gap-y-2 justify-center p-4 rounded-2xl bg-gray-200/70 dark:bg-black/20 backdrop-blur-xl border border-black/5 dark:border-white/20 transition-transform duration-300 ease-in-out">
         <!-- 大幅加深淺色模式下的文字顏色以提高對比度 -->
-        <div id="t" class="text-3xl font-bold text-gray-900 dark:text-sky-300">00:00:00</div>
-        <div id="d" class="text-lg text-gray-700 dark:text-gray-200"></div>
-        <!-- 【清晰度優化】再次提升地理位置與IP文字的對比度和字體粗細 -->
-        <div id="l" class="text-sm font-medium text-gray-700 dark:text-gray-300">正在獲取位置...</div>
+        <div id="t" class="text-3xl font-bold text-black/80 dark:text-sky-300">00:00:00</div>
+        <div id="d" class="text-lg text-black/70 dark:text-gray-200"></div>
+        <!-- 再次提升地理位置與IP文字的對比度和字體粗細 -->
+        <div id="l" class="text-sm font-medium text-black/60 dark:text-gray-300">正在獲取位置...</div>
     </div>
 
     <script>
@@ -157,7 +160,6 @@
 
             // 用於地理位置 API 的 JSONP 回呼函式
             window.L = function(json) {
-                // 【重大更新】修改回呼函式以適應新的 API (ipinfo.io)
                 if (json && json.ip) {
                     const locationEl = d.getElementById('l');
                     const ip = json.ip || '';
@@ -179,7 +181,7 @@
             };
 
             const locationScript = d.createElement('script');
-            // 【重大更新】將地理位置 API 更換為 ipinfo.io
+            // 【重大修正】使用 https://ipinfo.io 來取代會產生 403 Forbidden 錯誤的 API
             locationScript.src = `https://ipinfo.io?callback=L`;
             d.head.appendChild(locationScript);
 

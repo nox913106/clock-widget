@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 【最終修正】移除 class="dark"，讓頁面預設顯示淺色模式，並徹底修復其顏色問題 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -65,7 +66,7 @@
 </head>
 <body class="flex items-center justify-center min-h-screen p-2">
 
-    <!-- 【重大更新】引入卡片式設計，解決連結顏色問題 -->
+    <!-- 【最終修正】調整淺色模式的背景與文字，最大化對比度 -->
     <div id="main-container" class="flex items-center justify-center flex-wrap gap-x-4 gap-y-3 p-4 rounded-2xl bg-white/80 dark:bg-black/20 backdrop-blur-xl border border-black/10 dark:border-white/20 transition-transform duration-300 ease-in-out">
         <!-- 時間區塊 -->
         <div class="flex items-baseline gap-x-4">
@@ -152,14 +153,53 @@
             locationScript.src = `https://ipinfo.io?callback=L`;
             d.head.appendChild(locationScript);
 
-            window.T = function(json) {
-                timeOffset = new Date(json.currentUtcTime).getTime() - new Date().getTime();
-            };
+            /**
+             * 【重大更新】時間同步備援機制 - 改用 Fetch 搭配 CORS 代理
+             */
+            async function initializeTime() {
+                const timeProviders = [
+                    {
+                        name: 'worldtimeapi',
+                        url: 'https://worldtimeapi.org/api/ip',
+                        parser: (data) => new Date(data.utc_datetime).getTime()
+                    },
+                    {
+                        name: 'timeapi',
+                        url: 'https://timeapi.io/api/TimeZone/ip',
+                        parser: (data) => new Date(data.currentUtcTime).getTime()
+                    }
+                ];
 
-            const timeScript = d.createElement('script');
-            timeScript.src = `https://timeapi.io/api/TimeZone/ip?jsonp=T`;
-            d.head.appendChild(timeScript);
+                let success = false;
+                for (const provider of timeProviders) {
+                    try {
+                        // 使用 CORS 代理來繞過潛在的瀏覽器/網路限制
+                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(provider.url)}`;
+                        const response = await fetch(proxyUrl, { cache: 'no-store' });
+                        if (!response.ok) {
+                            throw new Error(`代理伺服器錯誤: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        const serverTime = provider.parser(data);
+                        if (isNaN(serverTime)) {
+                            throw new Error('從 API 收到無效的時間格式');
+                        }
+                        timeOffset = serverTime - new Date().getTime();
+                        console.log(`時間同步成功 (${provider.name})`);
+                        success = true;
+                        break; // 成功後跳出迴圈
+                    } catch (error) {
+                        console.error(`${provider.name} 同步失敗:`, error);
+                    }
+                }
+
+                if (!success) {
+                    console.error('所有時間同步方法均失敗。');
+                }
+            }
             
+            // 初始化
+            initializeTime();
             setResponsiveScale();
 
             setInterval(() => {

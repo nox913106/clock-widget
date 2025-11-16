@@ -1,159 +1,158 @@
 <!DOCTYPE html>
-<!-- 【最終修正】移除 class="dark"，讓頁面預設顯示淺色模式，並徹底修復其顏色問題 -->
+<!-- 【v2.8】還原為 Cyberpunk 簡潔風格，移除動畫 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>現在時間</title>
-    <!-- 引入 Tailwind CSS 以進行快速樣式設計 -->
-    <!-- 【重大更新】加入 Tailwind config 以啟用 'class' 策略來手動切換深色模式 -->
-    <script>
-        tailwind.config = {
-            darkMode: 'class' // 啟用 class 策略
-        }
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- 匯入 Roboto Mono (Cyberpunk 風格) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
             -webkit-font-smoothing: antialiased;
-            /* 初始隱藏，用於淡入效果 */
             opacity: 0;
             transition: opacity .5s ease-in;
             overflow: hidden;
-            /* 背景設為透明 */
-            background-color: transparent;
+            background-color: #ffffff;
         }
 
-        .colon {
-            position: relative;
-            top: -.05em; /* 微調冒號位置使其對齊 */
-            animation: p 1.5s infinite;
+        .dark body {
+            background-color: #0f172a; /* dark:bg-slate-900 */
         }
 
-        /* 冒號閃爍動畫 */
-        @keyframes p {
-            50% {
-                opacity: .3;
-            }
-        }
-        
-        /**
-         * 【手動修復】定義 主要時間 (#t) 的 淺色/深色 模式
-         * 顏色與陰影
-         */
-        #t {
-            color: #4f46e5; /* 淺色模式 (Indigo 600) - Cyberpunk 風格 */
-            /* 淺色模式下的清晰深色陰影 */
-            text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
-        }
-
-        .dark #t {
-            color: #7dd3fc; /* 深色模式 (Sky 300) - Cyberpunk 風格 */
-            /* 深色模式下的浮雕效果 */
-            text-shadow: -1px -1px 1px rgba(255, 255, 255, 0.15), 1px 1px 1px rgba(0, 0, 0, 0.5);
-        }
-
-        /**
-         * 為毛玻璃框架增加更強的立體感
-         */
         #main-container {
-            /* 淺色模式下的光影 */
             box-shadow: 
                 0px 10px 30px rgba(0, 0, 0, 0.1),
                 inset 0px 1px 1px rgba(255, 255, 255, 0.7);
+            border-width: 1px;
+            background-color: #ffffff; /* bg-white */
+            border-color: #e2e8f0; /* border-slate-200 */
         }
 
         .dark #main-container {
-             /* 深色模式下的光影 */
             box-shadow: 
                 0px 10px 30px rgba(0, 0, 0, 0.3),
                 inset 0px 1px 1px rgba(255, 255, 255, 0.1),
                 inset 0px -1px 0px rgba(255, 255, 255, 0.05);
+            background-color: #0f172a; /* dark:bg-slate-900 */
+            border-color: #334155; /* dark:border-slate-700 */
+        }
+
+        #d, .info-text {
+            color: #64748b; /* text-slate-500 */
+        }
+        .dark #d, .dark .info-text {
+            color: #94a3b8; /* dark:text-slate-400 */
+        }
+        .info-icon {
+            color: #64748b; /* text-slate-500 */
+        }
+        .dark .info-icon {
+            color: #94a3b8; /* dark:text-slate-400 */
+        }
+
+        .info-card {
+            background-color: #f1f5f9; /* bg-slate-100 */
+        }
+        .dark .info-card {
+            background-color: #1e293b; /* dark:bg-slate-800 */
+        }
+        .info-card:hover {
+            background-color: #e2e8f0; /* hover:bg-slate-200 */
+        }
+        .dark .info-card:hover {
+            background-color: #334155; /* dark:hover:bg-slate-700 */
         }
 
         /**
-         * 【手動修復】手動定義 淺色/深色 模式的顏色
-         * 解決 Tailwind CDN JIT 引擎可能無法即時偵測 .dark class 變更的問題
+         * Cyberpunk 時鐘樣式 (v2.8)
          */
-        
-        /* --- 主容器背景 --- */
-        #main-container {
-            background-color: #ffffff; /* 淺色模式 (bg-white) */
-            border-color: #e2e8f0; /* 淺色模式 (border-slate-200) */
-        }
-        .dark #main-container {
-            background-color: #0f172a; /* 深色模式 (bg-slate-900) */
-            border-color: #334155; /* 深色模式 (border-slate-700) */
-        }
-
-        /* --- 日期、地理、IP 文字 --- */
-        #d, #l-text, #ip-text {
-            color: #64748b; /* 淺色模式 (text-slate-500) */
-        }
-        .dark #d, .dark #l-text, .dark #ip-text {
-            color: #94a3b8; /* 深色模式 (text-slate-400) */
-        }
-
-        /* --- 圖示 (Icons) --- */
-        #info-cards svg {
-             color: #64748b; /* 淺色模式 (text-slate-500) */
-        }
-        .dark #info-cards svg {
-             color: #94a3b8; /* 深色模式 (text-slate-400) */
-        }
-
-        /* --- 資訊卡片 (Location, IP, Theme) 背景 --- */
-        .info-card {
-            background-color: #f1f5f9; /* 淺色模式 (bg-slate-100) */
-            transition: background-color 0.15s ease-in-out;
-        }
-        .dark .info-card {
-            background-color: #1e293b; /* 深色模式 (bg-slate-800) */
+        #time-container {
+            display: flex;
+            gap: 0.25rem; /* 4px */
+            font-family: 'Roboto Mono', monospace; 
+            /* 移除背景、邊框等樣式 */
         }
         
-        /* --- 資訊卡片 Hover 效果 --- */
-        .info-card:hover {
-             background-color: #e2e8f0; /* 淺色模式 (hover:bg-slate-200) */
+        /* 數字和冒號的共用樣式 */
+        .time-segment, .time-colon {
+            font-size: 2.75rem; /* 44px */
+            font-weight: 700;
+            line-height: 1.2;
+            /* 亮色模式：洋紅色 */
+            color: #db2777; /* text-pink-600 */
+            transition: color 0.3s, text-shadow 0.3s;
         }
-        .dark .info-card:hover {
-             background-color: #334155; /* 深色模式 (hover:bg-slate-700) */
+
+        /* 暗色模式：青色 + 光暈 */
+        .dark .time-segment, .dark .time-colon {
+            color: #67e8f9; /* text-cyan-300 */
+            text-shadow: 
+                0 0 5px rgba(103, 232, 249, 0.5),
+                0 0 10px rgba(103, 232, 249, 0.4);
         }
+
+        /* 冒號 (閃爍) */
+        .time-colon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: blink 1s step-end infinite;
+            /* 調整位置使其置中 */
+            transform: translateY(0.05em);
+            width: 0.6em;
+        }
+
+        @keyframes blink {
+            50% {
+                /* 暗色模式下，閃爍時保留一點光暈 */
+                .dark & {
+                    color: rgba(103, 232, 249, 0.3);
+                    text-shadow: 0 0 5px rgba(103, 232, 249, 0.2);
+                }
+                /* 亮色模式 */
+                color: rgba(219, 39, 119, 0.3);
+            }
+        }
+
+        /* 數字 (不需要額外樣式) */
+        .time-segment {
+            width: 1.6em; 
+            text-align: center;
+        }
+
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-2">
 
-    <!-- 【外觀更新】移除 Tailwind 顏色 class，改由上方 <style> 標籤手動控制 -->
-    <div id="main-container" class="flex items-center justify-center flex-wrap gap-x-4 gap-y-3 p-4 rounded-2xl border transition-transform duration-300 ease-in-out">
-        <!-- 時間區塊 -->
-        <div class="flex items-baseline gap-x-4">
-            <!-- 【外觀更新】移除 Tailwind 顏色 class (text-slate-800 dark:text-sky-300) -->
-            <div id="t" class="text-3xl font-bold">00:00:00</div>
-            <!-- 【外觀更新】移除 text-slate-500 dark:text-slate-400 -->
-            <div id="d" class="text-lg"></div>
+    <div id="main-container" class="flex items-center justify-center flex-wrap gap-x-4 gap-y-3 p-4 rounded-2xl transition-transform duration-300 ease-in-out">
+        
+        <div id="time-container">
+            <!-- JS 會動態填入 h, m, s -->
         </div>
-        <!-- 資訊卡片區塊 -->
+
+        <div id="d" class="text-lg"></div>
+        
         <div id="info-cards" class="flex items-center gap-x-2">
-            <!-- 地理位置卡片 -->
+            <!-- ... info cards ... -->
             <a id="location-card" href="#" target="_blank" rel="noopener noreferrer" class="info-card flex items-center gap-x-2 px-3 py-1.5 rounded-lg transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class=""><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                <!-- 【外觀更新】移除 text-slate-500 dark:text-slate-400 -->
-                <span id="l-text" class="text-sm font-medium">正在獲取...</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="info-icon"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span id="l-text" class="info-text text-sm font-medium">...</span>
             </a>
-            <!-- IP 位址卡片 -->
             <a id="ip-card" href="#" target="_blank" rel="noopener noreferrer" class="info-card flex items-center gap-x-2 px-3 py-1.5 rounded-lg transition-colors">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class=""><path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20Z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                <!-- 【外觀更新】移除 text-slate-500 dark:text-slate-400 -->
-                <span id="ip-text" class="text-sm font-medium">IP: ...</span>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="info-icon"><path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20Z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span id="ip-text" class="info-text text-sm font-medium">IP: ...</span>
             </a>
-            <!-- 【新功能】手動主題切換按鈕 -->
             <button id="theme-toggle" type="button" class="info-card flex items-center justify-center p-2 rounded-lg transition-colors" title="切換主題">
-                <!-- 月亮圖示 (淺色模式下顯示) -->
-                <svg id="theme-icon-moon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg id="theme-icon-moon" class="info-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
-                <!-- 太陽圖示 (深色模式下顯示) -->
-                <svg id="theme-icon-sun" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg id="theme-icon-sun" class="info-icon h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 110-8 4 4 0 010 8z" />
                 </svg>
             </button>
@@ -161,78 +160,42 @@
     </div>
 
     <script>
-        // 使用立即調用函式表達式 (IIFE) 來避免污染全域作用域
         (function(d) {
-            // 用於儲存伺服器與客戶端時間差的變數
+            // JS 邏輯與 v2.7 相同，快速且高效
             let timeOffset = 0;
-
-            /**
-             * 多語系支援
-             */
-            const translations = {
-                'en': { weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], loading: 'Getting...', ip: 'IP', unknownLocation: 'Unknown', mapTitle: 'View on Google Maps', ipTitle: 'View IP Details' },
-                'zh-TW': { weekdays: ['日', '一', '二', '三', '四', '五', '六'], loading: '正在獲取...', ip: 'IP 位址', unknownLocation: '未知地點', mapTitle: '在 Google Maps 上查看', ipTitle: '查詢 IP 詳細資訊' },
-                'ja': { weekdays: ['日', '月', '火', '水', '木', '金', '土'], loading: '取得中...', ip: 'IPアドレス', unknownLocation: '不明な場所', mapTitle: 'Googleマップで見る', ipTitle: 'IP詳細の確認' }
-            };
-            
-            function getLang() {
-                const userLang = navigator.language || 'en';
-                const mainLang = userLang.split('-')[0];
-                if (translations[userLang]) return userLang;
-                if (translations[mainLang]) return mainLang;
-                return 'en'; // 預設語言
-            }
-
-            const currentLang = getLang();
-            const T = translations[currentLang];
+            const T = { weekdays: ['日', '一', '二', '三', '四', '五', '六'], loading: '正在獲取...', ip: 'IP 位址', unknownLocation: '未知地點', mapTitle: '在 Google Maps 上查看', ipTitle: '查詢 IP 詳細資訊' };
             
             d.getElementById('l-text').innerText = T.loading;
 
-            /**
-             * 【新功能】初始化並設定主題切換
-             */
             function initializeTheme() {
                 const htmlEl = d.documentElement;
                 const toggleBtn = d.getElementById('theme-toggle');
                 const sunIcon = d.getElementById('theme-icon-sun');
                 const moonIcon = d.getElementById('theme-icon-moon');
 
-                // 更新圖示顯示
                 function updateIcons(isDark) {
                     sunIcon.style.display = isDark ? 'block' : 'none';
                     moonIcon.style.display = isDark ? 'none' : 'block';
                 }
 
-                // 載入主題
                 function loadTheme() {
                     const savedTheme = localStorage.getItem('theme');
-                    if (savedTheme === 'dark') {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
                         htmlEl.classList.add('dark');
                         updateIcons(true);
-                    } else if (savedTheme === 'light') {
+                    } else {
                         htmlEl.classList.remove('dark');
                         updateIcons(false);
-                    } else {
-                        // 如果沒有儲存的偏好，則檢查系統設定
-                        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                        if (prefersDark) {
-                            htmlEl.classList.add('dark');
-                            updateIcons(true);
-                        } else {
-                            htmlEl.classList.remove('dark');
-                            updateIcons(false);
-                        }
                     }
                 }
 
-                // 按鈕點擊事件
                 toggleBtn.addEventListener('click', () => {
                     const isDark = htmlEl.classList.toggle('dark');
-                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light'); 
                     updateIcons(isDark);
                 });
-
-                // 立即載入主題
+                
                 loadTheme();
             }
 
@@ -248,34 +211,27 @@
             }
 
             window.L = function(json) {
-                if (json && json.ip) {
-                    const locationCard = d.getElementById('location-card');
-                    const locationTextEl = d.getElementById('l-text');
-                    const ipCard = d.getElementById('ip-card');
-                    const ipTextEl = d.getElementById('ip-text');
+                if (!json) return;
+                const locationCard = d.getElementById('location-card');
+                const locationTextEl = d.getElementById('l-text');
+                const ipCard = d.getElementById('ip-card');
+                const ipTextEl = d.getElementById('ip-text');
 
-                    const ip = json.ip || '';
-                    const city = json.city || T.unknownLocation;
-                    const countryCode = json.country || '';
-                    
-                    locationTextEl.innerText = `${city}, ${countryCode}`;
-                    const encodedLocation = encodeURIComponent(`${city}, ${countryCode}`);
-                    locationCard.href = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-                    locationCard.title = T.mapTitle;
-
-                    ipTextEl.innerText = `${T.ip}: ${ip}`;
-                    ipCard.href = `https://ipinfo.io/${ip}`;
-                    ipCard.title = T.ipTitle;
-                }
+                const ip = json.ip || '';
+                const city = json.city || T.unknownLocation;
+                const countryCode = json.country || '';
+                
+                locationTextEl.innerText = `${city}, ${countryCode}`;
+                locationCard.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${city}, ${countryCode}`)}`;
+                locationCard.title = T.mapTitle;
+                ipTextEl.innerText = `${T.ip}: ${ip}`;
+                ipCard.href = `https://ipinfo.io/${ip}`;
+                ipCard.title = T.ipTitle;
             };
-
             const locationScript = d.createElement('script');
             locationScript.src = `https://ipinfo.io?callback=L`;
             d.head.appendChild(locationScript);
 
-            /**
-             * 【重大更新】時間同步備援機制 - 改用更穩定的 JSONP 方案
-             */
             function syncTime(provider) {
                 return new Promise((resolve) => {
                     const scriptId = 'time-jsonp-script';
@@ -288,30 +244,19 @@
                     window[callbackName] = function(data) {
                         try {
                             let serverTime;
-                            if (provider === 'worldtimeapi') {
-                                serverTime = new Date(data.utc_datetime).getTime();
-                            } else if (provider === 'timeapi') {
-                                serverTime = new Date(data.currentUtcTime).getTime();
-                            }
+                            if (provider === 'worldtimeapi') serverTime = new Date(data.utc_datetime).getTime();
+                            else if (provider === 'timeapi') serverTime = new Date(data.currentUtcTime).getTime();
                             if (isNaN(serverTime)) throw new Error('無效的時間格式');
                             timeOffset = serverTime - new Date().getTime();
                             console.log(`時間同步成功 (${provider})`);
                             resolve(true);
-                        } catch (e) {
-                            console.error(`${provider} 資料解析錯誤:`, e);
-                            resolve(false);
-                        } finally {
-                            cleanup();
-                        }
+                        } catch (e) { console.error(`${provider} 資料解析錯誤:`, e); resolve(false); } 
+                        finally { cleanup(); }
                     };
                     
-                    if (provider === 'worldtimeapi') {
-                        apiUrl = `https://worldtimeapi.org/api/ip?callback=${callbackName}`;
-                    } else if (provider === 'timeapi') {
-                        apiUrl = `https://timeapi.io/api/TimeZone/ip?jsonp=${callbackName}`;
-                    } else {
-                        return resolve(false);
-                    }
+                    if (provider === 'worldtimeapi') apiUrl = `https://worldtimeapi.org/api/ip?callback=${callbackName}`;
+                    else if (provider === 'timeapi') apiUrl = `https://timeapi.io/api/TimeZone/ip?jsonp=${callbackName}`;
+                    else return resolve(false);
 
                     const timer = setTimeout(() => {
                         console.warn(`${provider} 請求超時`);
@@ -321,7 +266,7 @@
 
                     function cleanup() {
                         clearTimeout(timer);
-                        delete window[callbackName];
+                        try { delete window[callbackName]; } catch (e) {}
                         const script = d.getElementById(scriptId);
                         if (script) script.remove();
                     }
@@ -329,48 +274,87 @@
                     const script = d.createElement('script');
                     script.id = scriptId;
                     script.src = apiUrl;
-                    script.onerror = () => {
-                        console.error(`${provider} 腳本載入失敗`);
-                        resolve(false);
-                        cleanup();
-                    };
+                    script.onerror = () => { console.error(`${provider} 腳本載入失敗`); resolve(false); cleanup(); };
                     d.head.appendChild(script);
                 });
             }
 
-            async function initializeTime() {
-                // 主要方法: worldtimeapi.org (更穩定)
-                let success = await syncTime('worldtimeapi');
+            // (v2.8) 更改 CSS class 名稱
+            function createTimeTile(id) {
+                const tile = d.createElement('div');
+                tile.className = 'time-segment'; // 更改 class name
+                tile.id = id;
                 
-                // 備援方法: timeapi.io
+                const valueSpan = d.createElement('span');
+                valueSpan.className = 'time-segment-value';
+                valueSpan.innerText = '00';
+                
+                tile.appendChild(valueSpan);
+                return tile;
+            }
+
+            function createTimeColon() {
+                const colon = d.createElement('span');
+                colon.className = 'time-colon'; // 更改 class name
+                colon.innerText = ':';
+                return colon;
+            }
+
+            async function initializeTime() {
+                let success = await syncTime('worldtimeapi');
                 if (!success) {
                     console.log('主要時間同步失敗，嘗試備援方案...');
                     success = await syncTime('timeapi');
                 }
+                if (!success) console.error('所有時間同步方法均失敗。');
 
-                if (!success) {
-                    console.error('所有時間同步方法均失敗。');
-                }
-            }
-            
-            // 初始化
-            initializeTheme(); // 【新功能】初始化主題
-            initializeTime();
-            setResponsiveScale();
-
-            setInterval(() => {
+                const timeContainer = d.getElementById('time-container');
                 const now = new Date(new Date().getTime() + timeOffset);
                 const h = ('0' + now.getHours()).slice(-2);
                 const m = ('0' + now.getMinutes()).slice(-2);
                 const s = ('0' + now.getSeconds()).slice(-2);
-                const year = now.getFullYear();
-                const month = ('0' + (now.getMonth() + 1)).slice(-2);
-                const day = ('0' + now.getDate()).slice(-2);
-                const weekday = T.weekdays[now.getDay()];
 
-                d.getElementById('t').innerHTML = `${h}<span class="colon">:</span>${m}<span class="colon">:</span>${s}`;
-                d.getElementById('d').innerText = `${year}-${month}-${day} ${weekday}`;
-            }, 1000);
+                const hEl = createTimeTile('h');
+                hEl.querySelector('.time-segment-value').innerText = h;
+                
+                const mEl = createTimeTile('m');
+                mEl.querySelector('.time-segment-value').innerText = m;
+                
+                const sEl = createTimeTile('s');
+                sEl.querySelector('.time-segment-value').innerText = s;
+
+                timeContainer.appendChild(hEl);
+                timeContainer.appendChild(createTimeColon());
+                timeContainer.appendChild(mEl);
+                timeContainer.appendChild(createTimeColon());
+                timeContainer.appendChild(sEl);
+                
+                const hVal = hEl.querySelector('.time-segment-value');
+                const mVal = mEl.querySelector('.time-segment-value');
+                const sVal = sEl.querySelector('.time-segment-value');
+                
+                setInterval(() => {
+                    const now = new Date(new Date().getTime() + timeOffset);
+                    const hStr = ('0' + now.getHours()).slice(-2);
+                    const mStr = ('0' + now.getMinutes()).slice(-2);
+                    const sStr = ('0' + now.getSeconds()).slice(-2);
+                    
+                    const year = now.getFullYear();
+                    const month = ('0' + (now.getMonth() + 1)).slice(-2);
+                    const day = ('0' + now.getDate()).slice(-2);
+                    const weekday = T.weekdays[now.getDay()];
+
+                    if (hVal.innerText !== hStr) hVal.innerText = hStr;
+                    if (mVal.innerText !== mStr) mVal.innerText = mStr;
+                    if (sVal.innerText !== sStr) sVal.innerText = sStr;
+
+                    d.getElementById('d').innerText = `${year}-${month}-${day} ${weekday}`;
+                }, 1000);
+            }
+            
+            initializeTheme();
+            initializeTime();
+            setResponsiveScale();
 
             d.body.style.opacity = 1;
         })(document);

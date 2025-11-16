@@ -39,14 +39,17 @@
         }
         
         /**
-         * 為兩種模式重新設計文字陰影以確保清晰度
+         * 【手動修復】定義 主要時間 (#t) 的 淺色/深色 模式
+         * 顏色與陰影
          */
         #t {
+            color: #4f46e5; /* 淺色模式 (Indigo 600) - Cyberpunk 風格 */
             /* 淺色模式下的清晰深色陰影 */
             text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .dark #t {
+            color: #7dd3fc; /* 深色模式 (Sky 300) - Cyberpunk 風格 */
             /* 深色模式下的浮雕效果 */
             text-shadow: -1px -1px 1px rgba(255, 255, 255, 0.15), 1px 1px 1px rgba(0, 0, 0, 0.5);
         }
@@ -124,7 +127,8 @@
     <div id="main-container" class="flex items-center justify-center flex-wrap gap-x-4 gap-y-3 p-4 rounded-2xl border transition-transform duration-300 ease-in-out">
         <!-- 時間區塊 -->
         <div class="flex items-baseline gap-x-4">
-            <div id="t" class="text-3xl font-bold text-slate-800 dark:text-sky-300">00:00:00</div>
+            <!-- 【外觀更新】移除 Tailwind 顏色 class (text-slate-800 dark:text-sky-300) -->
+            <div id="t" class="text-3xl font-bold">00:00:00</div>
             <!-- 【外觀更新】移除 text-slate-500 dark:text-slate-400 -->
             <div id="d" class="text-lg"></div>
         </div>

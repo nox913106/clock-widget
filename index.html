@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 【v2.8】還原為 Cyberpunk 簡潔風格，移除動畫 -->
+<!-- 【v2.9】修復 API 連線錯誤，移除不穩定的 worldtimeapi，優化錯誤處理 -->
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -70,13 +70,12 @@
         }
 
         /**
-         * Cyberpunk 時鐘樣式 (v2.8)
+         * Cyberpunk 時鐘樣式
          */
         #time-container {
             display: flex;
             gap: 0.25rem; /* 4px */
             font-family: 'Roboto Mono', monospace; 
-            /* 移除背景、邊框等樣式 */
         }
         
         /* 數字和冒號的共用樣式 */
@@ -103,24 +102,20 @@
             align-items: center;
             justify-content: center;
             animation: blink 1s step-end infinite;
-            /* 調整位置使其置中 */
             transform: translateY(0.05em);
             width: 0.6em;
         }
 
         @keyframes blink {
             50% {
-                /* 暗色模式下，閃爍時保留一點光暈 */
                 .dark & {
                     color: rgba(103, 232, 249, 0.3);
                     text-shadow: 0 0 5px rgba(103, 232, 249, 0.2);
                 }
-                /* 亮色模式 */
                 color: rgba(219, 39, 119, 0.3);
             }
         }
 
-        /* 數字 (不需要額外樣式) */
         .time-segment {
             width: 1.6em; 
             text-align: center;
@@ -139,7 +134,6 @@
         <div id="d" class="text-lg"></div>
         
         <div id="info-cards" class="flex items-center gap-x-2">
-            <!-- ... info cards ... -->
             <a id="location-card" href="#" target="_blank" rel="noopener noreferrer" class="info-card flex items-center gap-x-2 px-3 py-1.5 rounded-lg transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="info-icon"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span id="l-text" class="info-text text-sm font-medium">...</span>
@@ -161,7 +155,6 @@
 
     <script>
         (function(d) {
-            // JS 邏輯與 v2.7 相同，快速且高效
             let timeOffset = 0;
             const T = { weekdays: ['日', '一', '二', '三', '四', '五', '六'], loading: '正在獲取...', ip: 'IP 位址', unknownLocation: '未知地點', mapTitle: '在 Google Maps 上查看', ipTitle: '查詢 IP 詳細資訊' };
             
@@ -250,19 +243,22 @@
                             timeOffset = serverTime - new Date().getTime();
                             console.log(`時間同步成功 (${provider})`);
                             resolve(true);
-                        } catch (e) { console.error(`${provider} 資料解析錯誤:`, e); resolve(false); } 
+                        } catch (e) { 
+                            console.warn(`${provider} 資料解析錯誤 (使用本機時間):`, e); 
+                            resolve(false); 
+                        } 
                         finally { cleanup(); }
                     };
                     
-                    if (provider === 'worldtimeapi') apiUrl = `https://worldtimeapi.org/api/ip?callback=${callbackName}`;
-                    else if (provider === 'timeapi') apiUrl = `https://timeapi.io/api/TimeZone/ip?jsonp=${callbackName}`;
+                    // v2.9 修改：移除 worldtimeapi，只保留 timeapi
+                    if (provider === 'timeapi') apiUrl = `https://timeapi.io/api/TimeZone/ip?jsonp=${callbackName}`;
                     else return resolve(false);
 
                     const timer = setTimeout(() => {
-                        console.warn(`${provider} 請求超時`);
+                        console.warn(`${provider} 請求超時 (使用本機時間)`);
                         resolve(false);
                         cleanup();
-                    }, 8000);
+                    }, 5000); // 縮短超時時間為 5秒
 
                     function cleanup() {
                         clearTimeout(timer);
@@ -274,15 +270,15 @@
                     const script = d.createElement('script');
                     script.id = scriptId;
                     script.src = apiUrl;
-                    script.onerror = () => { console.error(`${provider} 腳本載入失敗`); resolve(false); cleanup(); };
+                    // v2.9 修改：將 console.error 改為 console.warn
+                    script.onerror = () => { console.warn(`${provider} 腳本載入失敗 (可能被阻擋或服務離線)，將使用本機時間`); resolve(false); cleanup(); };
                     d.head.appendChild(script);
                 });
             }
 
-            // (v2.8) 更改 CSS class 名稱
             function createTimeTile(id) {
                 const tile = d.createElement('div');
-                tile.className = 'time-segment'; // 更改 class name
+                tile.className = 'time-segment';
                 tile.id = id;
                 
                 const valueSpan = d.createElement('span');
@@ -295,18 +291,19 @@
 
             function createTimeColon() {
                 const colon = d.createElement('span');
-                colon.className = 'time-colon'; // 更改 class name
+                colon.className = 'time-colon';
                 colon.innerText = ':';
                 return colon;
             }
 
             async function initializeTime() {
-                let success = await syncTime('worldtimeapi');
+                // v2.9 修改：只嘗試 timeapi，失敗則靜默降級為本機時間
+                let success = await syncTime('timeapi');
+                
                 if (!success) {
-                    console.log('主要時間同步失敗，嘗試備援方案...');
-                    success = await syncTime('timeapi');
+                    console.warn('時間同步失敗或已略過，改用本機系統時間。');
+                    timeOffset = 0;
                 }
-                if (!success) console.error('所有時間同步方法均失敗。');
 
                 const timeContainer = d.getElementById('time-container');
                 const now = new Date(new Date().getTime() + timeOffset);

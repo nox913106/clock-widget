@@ -486,7 +486,6 @@
 
     <script>
             (function (d) {
-                let timeOffset = 0;
                 const T = { weekdays: ['週日', '週一', '週二', '週三', '週四', '週五', '週六'], loading: '...', ip: 'IP', unknownLocation: '未知' };
 
                 function initializeTheme() {
@@ -536,118 +535,6 @@
                 const locationScript = d.createElement('script');
                 locationScript.src = `https://ipinfo.io?callback=L`;
                 d.head.appendChild(locationScript);
-
-                function syncTime(provider) {
-                    return new Promise((resolve) => {
-                        const scriptId = 'time-jsonp-script';
-                        const existingScript = d.getElementById(scriptId);
-                        if (existingScript) existingScript.remove();
-                        const callbackName = 'timeCallback' + Date.now();
-                        let apiUrl = '';
-
-                        window[callbackName] = function (data) {
-                            try {
-                                let serverTime;
-                                if (provider === 'worldtimeapi') {
-                                    serverTime = new Date(data.utc_datetime).getTime();
-                                } else if (provider === 'timeapi') {
-                                    serverTime = new Date(data.currentUtcTime).getTime();
-                                } else if (provider === 'worldclock') {
-                                    serverTime = new Date(data.currentDateTime).getTime();
-                                }
-
-                                if (isNaN(serverTime)) throw new Error('無效的時間格式');
-                                timeOffset = serverTime - new Date().getTime();
-                                console.log(`✅ 時間同步成功 (${provider}), 偏移: ${timeOffset}ms`);
-                                resolve({ success: true, provider, offset: timeOffset });
-                            } catch (e) {
-                                console.warn(`❌ ${provider} 解析失敗:`, e);
-                                resolve({ success: false, provider, error: e.message });
-                            } finally {
-                                cleanup();
-                            }
-                        };
-
-                        // 設定 API URLs
-                        if (provider === 'worldtimeapi') {
-                            apiUrl = `https://worldtimeapi.org/api/ip`;
-                        } else if (provider === 'timeapi') {
-                            apiUrl = `https://timeapi.io/api/TimeZone/ip?jsonp=${callbackName}`;
-                        } else if (provider === 'worldclock') {
-                            apiUrl = `https://worldclockapi.com/api/json/utc/now`;
-                        } else {
-                            return resolve({ success: false, provider, error: 'Unknown provider' });
-                        }
-
-                        const timer = setTimeout(() => {
-                            console.warn(`⏱️ ${provider} 超時 (7秒)`);
-                            resolve({ success: false, provider, error: 'Timeout' });
-                            cleanup();
-                        }, 7000);
-
-                        function cleanup() {
-                            clearTimeout(timer);
-                            try { delete window[callbackName]; } catch (e) { }
-                            const script = d.getElementById(scriptId);
-                            if (script) script.remove();
-                        }
-
-                        // WorldTimeAPI 使用 fetch，其他使用 JSONP
-                        if (provider === 'worldtimeapi') {
-                            fetch(apiUrl, { method: 'GET', cache: 'no-cache' })
-                                .then(res => res.json())
-                                .then(data => window[callbackName](data))
-                                .catch(err => {
-                                    console.warn(`❌ ${provider} 請求失敗:`, err);
-                                    resolve({ success: false, provider, error: err.message });
-                                    cleanup();
-                                });
-                        } else {
-                            const script = d.createElement('script');
-                            script.id = scriptId;
-                            script.src = apiUrl;
-                            script.onerror = () => {
-                                console.warn(`❌ ${provider} 腳本載入失敗`);
-                                resolve({ success: false, provider, error: 'Script load failed' });
-                                cleanup();
-                            };
-                            d.head.appendChild(script);
-                        }
-                    });
-                }
-
-                async function tryMultipleTimeAPIs() {
-                    const providers = ['worldtimeapi', 'timeapi', 'worldclock'];
-
-                    for (const provider of providers) {
-                        console.log(`🔄 嘗試同步時間: ${provider}...`);
-                        const result = await syncTime(provider);
-                        if (result.success) {
-                            showSyncStatus('success', provider, result.offset);
-                            return true;
-                        }
-                    }
-
-                    console.warn('⚠️ 所有時間 API 都失敗，使用本地時間');
-                    showSyncStatus('warning', null, 0);
-                    return false;
-                }
-
-                function showSyncStatus(status, provider, offset) {
-                    const dateEl = d.getElementById('d');
-                    if (!dateEl) return;
-
-                    let indicator = '';
-                    if (status === 'success') {
-                        const offsetSec = Math.abs(offset / 1000).toFixed(1);
-                        indicator = ` <span style="color: #10b981; font-size: 0.75em;" title="已與 ${provider} 同步，誤差 ${offsetSec}s">✓</span>`;
-                    } else if (status === 'warning') {
-                        indicator = ` <span style="color: #f59e0b; font-size: 0.75em;" title="無法連接時間伺服器，顯示本地時間">⚠</span>`;
-                    }
-
-                    // Store indicator for later use
-                    window.timeSyncIndicator = indicator;
-                }
 
                 function createFlipTile(id) {
                     const tile = d.createElement('div');
@@ -704,12 +591,9 @@
                     return colon;
                 }
 
-                async function initializeTime() {
-                    // 嘗試多個時間 API
-                    await tryMultipleTimeAPIs();
-
+                function initializeTime() {
                     const timeContainer = d.getElementById('time-container');
-                    const now = new Date(new Date().getTime() + timeOffset);
+                    const now = new Date();
                     const h = ('0' + now.getHours()).slice(-2);
                     const m = ('0' + now.getMinutes()).slice(-2);
                     const s = ('0' + now.getSeconds()).slice(-2);
@@ -729,7 +613,7 @@
                     timeContainer.appendChild(sEl);
 
                     setInterval(() => {
-                        const now = new Date(new Date().getTime() + timeOffset);
+                        const now = new Date();
                         const hStr = ('0' + now.getHours()).slice(-2);
                         const mStr = ('0' + now.getMinutes()).slice(-2);
                         const sStr = ('0' + now.getSeconds()).slice(-2);
@@ -743,8 +627,7 @@
                         updateFlipTile(mEl, mStr);
                         updateFlipTile(sEl, sStr);
 
-                        const indicator = window.timeSyncIndicator || '';
-                        d.getElementById('d').innerHTML = `${year}-${month}-${day} ${weekday}${indicator}`;
+                        d.getElementById('d').innerHTML = `${year}-${month}-${day} ${weekday}`;
                     }, 1000);
                 }
 
